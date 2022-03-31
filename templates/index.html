@@ -1,0 +1,90 @@
+{{define "title"}}LED Strip Stream Integration{{end}}
+
+{{define "scripts"}}
+<script>
+    let colors = [];
+
+    function saveValues() {
+        const brightness = document.getElementById("led_brightness").value;
+        const display = document.getElementById("display_type").value;
+        fetch(window.location.origin + "/api/values", {
+            headers: {
+                "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify({
+                brightness: parseInt(brightness),
+                display: parseInt(display),
+                colors
+            })
+        }).then(resp => {
+            return resp.json();
+        }).then(json => {
+            console.log(JSON.stringify(json));
+        });
+    }
+
+    function addColor() {
+        const color = document.getElementById("new_color_code").value;
+        if (!color.match(/^#[0-9a-fA-F]{6}$/g))
+            return;
+
+        colors.push(color.substring(1));
+        saveValues();
+    }
+
+    function removeColor(index) {
+        colors = [...colors.slice(0, index), colors.slice(index)];
+        saveValues();
+    }
+</script>
+{{end}}
+
+{{define "body"}}
+<div class="center container" style="width: 500px;">
+    <h1>Hi!</h1>
+    <div class="input">
+        <div class="label">
+            <label for="led_brightness">Brightness:</label>
+        </div>
+        <input class="value" type="range" id="led_brightness" name="led_brightness" value="" min="0" max="255"
+            onchange="saveValues()">
+    </div>
+    <div class="input">
+        <div class="label">
+            <label for="display_type">Display:</label>
+        </div>
+        <select class="value" name="display_type" id="display_type" onchange="saveValues()">
+            <!-- TODO: Don't hard code -->
+            <option value="0">IDLE</option>
+            <option value="1">SOLID</option>
+            <option value="2">RAINBOW</option>
+            <option value="3">BLOCK COLOR</option>
+            <option value="4">BLOCK ALTERNATE</option>
+            <option value="5">POLICE</option>
+        </select>
+    </div>
+    <div>
+        <h3>Colors</h3>
+        <div id="colors-list-div" class="colors-list">
+        </div>
+        <div class="input">
+            <input class="value" type="text" id="new_color_code" name="new_color_code" placeholder="Ex: #ff0000">
+            <button onclick="addColor()">Add Color</button>
+        </div>
+    </div>
+</div>
+<script>
+    fetch(window.location.origin + "/api/values", {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        method: "GET"
+    }).then(resp => {
+        return resp.json();
+    }).then(json => {
+        document.getElementById("led_brightness").value = json.brightness;
+        document.getElementById("display_type").value = json.display;
+    });
+</script>
+{{end}}
